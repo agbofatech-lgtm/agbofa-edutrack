@@ -1,0 +1,35 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py", "*_tests.py"]
+addopts = "-ra --strict-markers"
+testpaths = ["core", "identity"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+[tool.mypy]
+python_version = "3.11"
+plugins = ["mypy_django_plugin.main"]
+ignore_missing_imports = true
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_return_any = true
+exclude = ["migrations/"]
+
+[[tool.mypy.overrides]]
+module = ["core.api.v1.auth", "identity.models"]
+disable_error_code = ["attr-defined", "misc", "override"]
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"

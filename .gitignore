@@ -218,3 +218,26 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# JavaScript / TypeScript toolchains
+node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/.vite/
+*.tsbuildinfo
+
+# Local environments and generated state
+.env.*
+!.env.example
+backend/staticfiles/
+*.sqlite3
+*.sqlite3-journal
+
+# Secret material (never commit private keys or local credentials)
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+secrets/
+.secrets/
