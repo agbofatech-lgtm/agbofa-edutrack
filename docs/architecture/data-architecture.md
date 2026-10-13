@@ -1,6 +1,6 @@
 # Conceptual PostgreSQL data architecture — proposed, not migrated
 
-This document maps the Master Requirements v1.5 concepts into a future relational design. It is not an approved field-level schema, a migration plan, or evidence of existing school records. The only concrete model definitions in this foundation are technical identity/RBAC and minimal audit primitives; no migration is committed and no learner or finance tables exist.
+This document maps the Master Requirements v1.5 concepts into a future relational design. It is not an approved field-level schema, a migration plan, or evidence of existing school records. The concrete model definitions are limited to technical identity/RBAC, append-only audit, encrypted TOTP credential, and hashed one-time recovery-token primitives. No migration is committed and no learner or finance tables exist; CI creates unmigrated tables only in a disposable test database.
 
 ## Proposed entity groups
 
@@ -34,7 +34,7 @@ erDiagram
 
 `User`, `Role`, `Permission`, `RolePermission`, `ScopeGrant`, `ApprovalDelegation`, `AuditEvent`, `ConfigDefinition`, `ConfigVersion`, `ChangeRequest`, `ImpactReview`, `Approval`, `FeatureFlag`.
 
-The code presently defines only `User`, `AccessRole`, `AccessPermission`, `RolePermission`, `ScopeGrant`, and `AuditEvent`. No sample roles/permissions are seeded. A school-approved role-permission matrix and record-scope vocabulary are prerequisites to assigning real grants.
+The code defines `User`, `AccessRole`, `AccessPermission`, `RolePermission`, `ScopeGrant`, `AuditEvent`, `MfaCredential`, and `AccountRecoveryToken`. MFA ciphertext and recovery token digests are technical security fields; no raw recovery token is stored. No sample roles/permissions are seeded. A school-approved role-permission matrix and record-scope vocabulary are prerequisites to assigning real grants. Field-level schema/migration review remains required before any shared or production use.
 
 ### School / academic foundation
 

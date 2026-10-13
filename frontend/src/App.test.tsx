@@ -31,10 +31,15 @@ describe('application foundation shell', () => {
         new Response(
           JSON.stringify({
             authenticated: true,
+            sessionExpiresAt: new Date(Date.now() + 3_600_000).toISOString(),
             user: {
               id: 7,
               username: 'reviewer',
               displayName: 'School Reviewer',
+              isPrivileged: false,
+              mfaEnabled: false,
+              roles: [],
+              permissions: [],
             },
           }),
           {
@@ -77,6 +82,47 @@ describe('application foundation shell', () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(2)
     })
+  })
+
+  it('returns to sign-in and announces an expired server session', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ csrfToken: 'csrf' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            authenticated: true,
+            sessionExpiresAt: new Date(Date.now() - 1_000).toISOString(),
+            user: {
+              id: 8,
+              username: 'reviewer',
+              displayName: 'Reviewer',
+              isPrivileged: false,
+              mfaEnabled: false,
+              roles: [],
+              permissions: [],
+            },
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        ),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<App />)
+    expect(
+      await screen.findByRole('heading', { name: 'Sign in to EduTrack' }),
+    ).toBeInTheDocument()
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Your session expired. Please sign in again.',
+    )
   })
 
   it('shows an explicit retryable error rather than fabricated availability when the API is offline', async () => {

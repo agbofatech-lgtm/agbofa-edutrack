@@ -1,8 +1,8 @@
-# Architecture overview — Prompt 01 foundation
+# Architecture overview — Prompt 01/02 foundation
 
 ## Status and scope
 
-This is a modular-monolith foundation, not a deployed or school-approved production system. The Owner explicitly reopened Prompt 01 for engineering-foundation work only; all business-module, policy, integration, pilot, and release gates remain closed. The stack below follows the Prompt 01 recommendation. No architecture deviation is proposed.
+This is a modular-monolith foundation, not a deployed or school-approved production system. Prompt 01 and the Owner-authorized Prompt 02 scope are limited to engineering/identity foundations. Business modules, policy activation, external recovery channels, live data, migration execution, pilot and release gates remain closed. The stack follows the Prompt 01 recommendation; no architecture deviation is proposed.
 
 ## System context
 
@@ -44,10 +44,10 @@ The future business domains must remain separate packages with explicit service/
 
 - API prefix: `/api/v1/`, using DRF namespace versioning. `v1` is the only accepted version in this foundation.
 - Health: `/api/v1/health/live/` reports process liveness only; `/api/v1/health/ready/` checks one constant PostgreSQL query. Neither checks Redis, Celery, or future business functionality.
-- Authentication: Django session cookies, JSON CSRF-token endpoint, same-origin requests. No JWT, local-storage token, public sign-up, default account, or API key is created.
-- Authorization: API defaults to authenticated access. Future private views must use a server-side permission contract and resolve record scope from trusted server-side state. A client-side navigation item is not an authorization check.
+- Authentication: Django session cookies, JSON CSRF-token endpoint, same-origin no-store requests, generic credential errors, server-reported expiry and client expiry handling. Django `is_staff`/`is_superuser` accounts must complete RFC 6238 TOTP; seeds are AES-GCM encrypted using a separate environment key. Recovery tokens are hashed, single-use, and deliverable only through an explicitly configured adapter; no adapter is included or active.
+- Authorization: API defaults to authenticated access. Role and permission identifiers are derived from effective server-side grants; `HasRBACPermission` and `scope_queryset` fail closed for missing contracts and scope grants. No school role matrix, domain permission catalog, grant-management API, or business endpoint is created. A client-side navigation item is not an authorization check.
 - Jobs: Celery app and Redis settings are present; no task is registered or dispatched. Add a job only after the process, retry, idempotency, visibility, privacy and failure-handling need is reviewed.
-- Offline: the service worker may precache static shell assets only. It does not cache or queue authenticated API responses, marks, learner records, payments, or financial actions.
+- Offline: the service worker precaches public static shell assets only, prompts before activating updates, excludes `/api/` navigations, and has no runtime cache rules. API fetches and responses carry no-store directives; no credentials, learner records, financial data, or writes are cached or queued.
 
 ## Data and environment
 

@@ -2,7 +2,7 @@
 
 ## Security objectives
 
-Protect learner/guardian and staff information, preserve academic/financial evidence, enforce record-level scope on the server, prevent unsafe privilege changes, and make status/errors honest. This Prompt 01 work establishes seams only; it is not a security certification or a production authorization.
+Protect learner/guardian and staff information, preserve academic/financial evidence, enforce record-level scope on the server, prevent unsafe privilege changes, and make status/errors honest. Prompt 01/02 establishes tested foundations only; this is not a security certification or a production authorization.
 
 ## Trust boundaries
 
@@ -16,11 +16,15 @@ Protect learner/guardian and staff information, preserve academic/financial evid
 ## Authentication and authorization controls
 
 - Django's custom user model is chosen before domain data/migrations exist.
-- Login uses Django password hashing/authentication, generic invalid-credential responses, CSRF-protected POST, session rotation, and logout invalidation.
+- Login uses Django password hashing/authentication, identical generic credential failures for known/unknown users, CSRF-protected POST, session-key rotation, and logout invalidation. Session expiry is sent by the server, shown in the shell, and handled by browser timers plus refresh/focus checks.
+- Django `is_staff` and `is_superuser` accounts are required to enroll and complete RFC 6238 TOTP before obtaining an authenticated session. TOTP seeds are encrypted at rest with AES-256-GCM under a separate `MFA_ENCRYPTION_KEY`; codes are time-window checked and each counter can be used once. The key is required at use time and fails closed if missing or invalid.
+- Recovery uses high-entropy, single-use tokens stored only as SHA-256 digests and password reset invalidates existing Django sessions. Delivery is disabled by default; no email/SMS provider, verified recovery contact, or delivery credentials are included. A configured adapter must be explicitly Owner-approved.
+- Login, MFA, and recovery requests are rate-throttled using configurable DRF scopes. Defaults are provisional and IP-based; reverse-proxy client identity and shared-cache behavior require validation before exposure.
 - No default username/password, public sign-up, token in localStorage, or superuser bypass exists in `HasRBACPermission`.
-- `AccessRole`, `AccessPermission`, `RolePermission`, and effective-dated `ScopeGrant` are the server-side authorization foundation. Role labels are data, not a hard-coded school roster.
-- Scope helper denies when there is no active exact grant; global access requires an explicit canonical global grant. Future views must resolve scope from trusted service/view code and apply the corresponding scoped queryset before returning records.
-- Minimal login/logout audit events are append-only through ordinary ORM save/update/delete paths; actor deletion is protected. Role, permission and scope-grant provisioning endpoints do not exist, and their changes are not automatically audited. Do not expose grant administration until an Owner-authorized management service records each change and its actor in the same transaction. A database role/trigger/retention strategy is still needed to protect audit evidence against direct SQL and privileged database actors.
+- `AccessRole`, `AccessPermission`, `RolePermission`, and effective-dated `ScopeGrant` remain the server-side authorization foundation. Active role labels and permission codes returned in the session are derived from the database; they are UI hints, not authority. No school roles, permissions, or scope hierarchy are seeded.
+- Scope helpers deny when there is no active exact grant; global access requires an explicit canonical global grant. Future views must resolve scope from trusted service/view code and apply the corresponding scoped queryset before returning records. No learner/business endpoint is currently registered.
+- Login, logout, MFA setup/verification, recovery request/completion audit actions are allow-listed. The service rejects sensitive audit metadata keys, and the model blocks ordinary ORM update/delete paths; raw SQL, bulk creation, administrators, DB compromise and retention are not controlled by this layer.
+- A policy-neutral maker-checker interface requires a distinct actor, an exact scoped permission and an explicit policy callback; with no approved callback it denies. It stores no approvals and creates no workflow. Role/grant provisioning endpoints and automated grant-change auditing remain absent; an Owner-approved management service must audit grant changes atomically before provisioning is exposed.
 
 ## Input, errors and observability
 
@@ -34,16 +38,18 @@ The login serializer bounds input lengths; API defaults to JSON; readiness retur
 
 | Threat | Foundation mitigation | Residual work before exposure |
 |---|---|---|
-| Credential theft / session fixation | Django password hashing and login session rotation; HttpOnly session cookie | MFA for privileged accounts, password/reset policy, login throttling/lockout, session revocation and incident process |
-| CSRF / cross-site requests | CSRF middleware, token endpoint, same-origin deployment, Lax cookies | Validate final domains and trusted origins; browser-level security test |
+| Credential theft / session fixation | Django password hashing, generic failures, session rotation/expiry, throttles, HttpOnly cookie, TOTP for Django platform admins | Owner approval of which school identities are privileged, session/throttle policy, factor reset, independent review and incident process |
+| CSRF / cross-site requests | CSRF middleware, token endpoint, protected state-changing authentication endpoints, same-origin deployment, Lax cookies | Validate final domains and trusted origins; browser-level security test |
+| Recovery-token theft / account enumeration | Generic responses; high-entropy single-use tokens stored as digests; disabled-by-default delivery seam; no recovery contact disclosed | Approve identity proofing, delivery channel, token lifetime, retention, recovery support and privileged-factor reset; configure no provider until approved |
+| TOTP seed/code compromise | AES-GCM encrypted seed with separate key, short pre-auth session, replay prevention, CSRF and throttling | Owner key custody/rotation, TOTP enrollment policy, lost-device process and deployment key provisioning |
 | Horizontal/vertical privilege escalation | RBAC query service and fail-closed scope contract | Approved matrix, comprehensive object-level negative tests for every future endpoint, periodic access review |
-| Tampering with audit records | Append-only ORM manager/model, protected actor references | Database privileges/triggers, retention, immutable backup/log sink, privileged DBA threat model |
+| Tampering with audit records | Action-allow-listed service, sensitive metadata rejection, append-only ORM manager/model, protected actor references | Database privileges/triggers, retention, immutable backup/log sink, privileged DBA threat model, and grant-change audit process |
 | Secret leakage | Environment-only settings, ignore rules, blank template fields, secret scan | External secret-store ownership, rotation, deployment permission review |
 | Dependency compromise/vulnerability | Lockfile, version constraints, audit checks and PR dependency review | Pin/monitor Python transitive graph, SBOM, update cadence and production image scan |
 | Data loss / malicious changes | PostgreSQL architecture only | Backup schedule, restore drills, point-in-time recovery, retention, monitoring; none is provisioned |
-| Unsafe offline sync | Precaches static shell only; API data is network-only | Device-loss/conflict policy, cryptographic threat model and Owner approval before drafts |
+| Unsafe offline sync | Static-shell precache only, no Workbox runtime routes, API navigation denied from fallback, no-store fetch/response directives, no private browser storage | Device-loss/conflict policy, cryptographic threat model and Owner approval before any draft/offline workflow |
 | Unverified operational state | UI uses honest foundation text; no fabricated metrics | UAT with school data stewards after lawful/approved data onboarding |
 
 ## Explicit security limitations
 
-No MFA, account provisioning flow, login rate limiting, email/SMS delivery, production TLS, database RLS, database immutability trigger, guardian consent, data retention policy, backup/restore, penetration test or independent threat assessment is completed. Do not deploy or import real data until these risks have Owner-approved treatment.
+No school-specific privileged-role matrix, account provisioning flow, verified recovery channel, MFA factor reset, production migration, production TLS validation, database RLS/immutability trigger, grant-management API, audit retention policy, guardian consent, backup/restore, independent penetration test, full WCAG 2.2 AA audit or threat-model workshop is completed. The current 8-hour/browser-close session policy, TOTP defaults, MFA setup lifetime and rate limits are technical defaults pending Owner approval. Do not deploy or import real data until the open decisions and schema/migration plan have an approved treatment.

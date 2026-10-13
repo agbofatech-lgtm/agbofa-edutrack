@@ -5,8 +5,10 @@
 | Package | Owns | Explicitly does not own |
 |---|---|---|
 | `core` | API-version prefix, liveness/readiness endpoints, request ID, structured logging, cross-cutting HTTP defaults | Domain data, policy decisions, business calculations |
-| `identity` | User model, role/permission definitions, exact scope grants, append-only audit-event API guard | Institutional role assignments, school policy approvals, login provisioning workflow, MFA or business-record tables |
-| `frontend` | Accessible PWA shell, sign-in form, generic loading/error/success states, same-origin HTTP client | Authorization truth, school data, report/finance calculations, cached API data |
+| `identity` | User model, data-defined role/permission and scope grants, append-only audit-event API guard, encrypted TOTP and disabled-by-default recovery service seams, policy-neutral maker-checker contract | Institutional role assignments, school policy approvals, live recovery delivery, login provisioning, business approval workflows or business-record tables |
+| `frontend` | Accessible role-aware foundation shell, session/CSRF sign-in, TOTP challenge/setup, recovery request/token form, generic loading/error/success states, same-origin no-store HTTP client | Authorization truth, school data, report/finance calculations, cached API data or an external recovery channel |
+
+The Prompt 02 shell displays active role labels supplied by the identity service and exposes only foundation pages. There is no approved school permission matrix or business route catalog, so no school-operation navigation is seeded. UI visibility is not server authorization.
 
 ## Planned modular-monolith boundaries (not implemented)
 

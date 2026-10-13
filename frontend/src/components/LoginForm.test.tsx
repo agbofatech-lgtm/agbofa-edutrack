@@ -3,10 +3,15 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { LoginForm } from './LoginForm'
 
+const recoveryProps = {
+  onRecoveryComplete: vi.fn().mockResolvedValue(''),
+  onRecoveryRequest: vi.fn().mockResolvedValue(''),
+}
+
 describe('LoginForm', () => {
-  it('exposes labelled credentials and submits without exposing a self-sign-up path', async () => {
+  it('exposes labelled credentials and submits without a self-sign-up path', async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined)
-    render(<LoginForm onSubmit={onSubmit} />)
+    render(<LoginForm {...recoveryProps} onSubmit={onSubmit} />)
 
     const username = screen.getByRole('textbox', { name: 'Username' })
     const password = screen.getByLabelText('Password')
@@ -21,6 +26,9 @@ describe('LoginForm', () => {
       ),
     )
     expect(screen.getByText(/There is no public sign-up/i)).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Account recovery' }),
+    ).toBeInTheDocument()
   })
 
   it('announces generic sign-in errors accessibly', async () => {
@@ -29,7 +37,7 @@ describe('LoginForm', () => {
       .mockRejectedValue(
         new Error('Unable to sign in with the supplied credentials.'),
       )
-    render(<LoginForm onSubmit={onSubmit} />)
+    render(<LoginForm {...recoveryProps} onSubmit={onSubmit} />)
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Username' }), {
       target: { value: 'unknown' },
@@ -42,5 +50,17 @@ describe('LoginForm', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Unable to sign in with the supplied credentials.',
     )
+  })
+
+  it('opens recovery without implying that an email or SMS channel is active', () => {
+    render(<LoginForm {...recoveryProps} onSubmit={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Account recovery' }))
+
+    expect(
+      screen.getByRole('heading', { name: 'Account recovery' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/no email or SMS delivery configured/i),
+    ).toBeInTheDocument()
   })
 })

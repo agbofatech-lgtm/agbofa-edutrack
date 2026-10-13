@@ -1,21 +1,39 @@
 export type AuthenticatedSession = {
   authenticated: true
+  sessionExpiresAt: string
   user: {
     id: number
     username: string
     displayName: string
+    isPrivileged: boolean
+    mfaEnabled: boolean
+    roles: string[]
+    permissions: string[]
   }
 }
 
 export type AnonymousSession = {
   authenticated: false
+  mfaRequired?: false
 }
 
-export type Session = AuthenticatedSession | AnonymousSession
+export type MfaPendingSession = {
+  authenticated: false
+  mfaRequired: true
+  setupRequired: boolean
+  pendingExpiresAt: string
+  setupSecret?: string
+  provisioningUri?: string
+}
 
+export type Session =
+  AuthenticatedSession | AnonymousSession | MfaPendingSession
+export type LoginResponse = (AuthenticatedSession | MfaPendingSession) & {
+  csrfToken: string
+}
 type CsrfResponse = { csrfToken: string }
-type LoginResponse = AuthenticatedSession & { csrfToken: string }
 type ErrorPayload = { detail?: string; nonFieldErrors?: string[] }
+type RecoveryResponse = { detail: string }
 
 export class ApiClientError extends Error {
   readonly status: number | null
@@ -36,6 +54,7 @@ async function requestJson<T>(
   try {
     response = await fetch(path, {
       ...init,
+      cache: 'no-store',
       credentials: 'same-origin',
       headers: {
         Accept: 'application/json',
@@ -53,6 +72,9 @@ async function requestJson<T>(
     (T & ErrorPayload) | null
 
   if (!response.ok) {
+    if (response.status === 401 && !path.startsWith('/api/v1/auth/')) {
+      window.dispatchEvent(new Event('edutrack:session-expired'))
+    }
     const message =
       payload?.detail ??
       payload?.nonFieldErrors?.[0] ??
@@ -87,10 +109,52 @@ export function signIn(
   })
 }
 
-export function signOut(csrfToken: string): Promise<void> {
-  return requestJson<void>('/api/v1/auth/logout/', {
+export function verifyMfa(
+  code: string,
+  csrfToken: string,
+): Promise<AuthenticatedSession & { csrfToken: string }> {
+  return requestJson('/api/v1/auth/mfa/verify/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': csrfToken },
+    body: JSON.stringify({ code }),
+  })
+}
+
+export function cancelMfa(csrfToken: string): Promise<AnonymousSession> {
+  return requestJson('/api/v1/auth/mfa/cancel/', {
     method: 'POST',
     headers: { 'X-CSRFToken': csrfToken },
     body: JSON.stringify({}),
+  })
+}
+
+export function signOut(csrfToken: string): Promise<AnonymousSession> {
+  return requestJson('/api/v1/auth/logout/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': csrfToken },
+    body: JSON.stringify({}),
+  })
+}
+
+export function requestAccountRecovery(
+  username: string,
+  csrfToken: string,
+): Promise<RecoveryResponse> {
+  return requestJson('/api/v1/auth/recovery/request/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': csrfToken },
+    body: JSON.stringify({ username }),
+  })
+}
+
+export function completeAccountRecovery(
+  token: string,
+  newPassword: string,
+  csrfToken: string,
+): Promise<RecoveryResponse> {
+  return requestJson('/api/v1/auth/recovery/complete/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': csrfToken },
+    body: JSON.stringify({ token, newPassword }),
   })
 }

@@ -134,11 +134,21 @@ def validate_environment_template() -> None:
             continue
         key, value = stripped.split("=", maxsplit=1)
         values[key] = value
-    for secret_key in ("DJANGO_SECRET_KEY", "POSTGRES_PASSWORD", "DATABASE_URL"):
+    for secret_key in (
+        "DJANGO_SECRET_KEY",
+        "MFA_ENCRYPTION_KEY",
+        "POSTGRES_PASSWORD",
+        "DATABASE_URL",
+        "IDENTITY_RECOVERY_DELIVERY_BACKEND",
+    ):
         require(
             values.get(secret_key, "") == "",
             f"{secret_key} must stay blank in the template",
         )
+    require(
+        values.get("IDENTITY_RECOVERY_TOKEN_TTL_SECONDS") == "0",
+        "recovery token issuance must remain disabled in the template",
+    )
 
 
 def validate_package_lock() -> None:

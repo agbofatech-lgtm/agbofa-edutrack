@@ -5,6 +5,12 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
 
+import {
+  API_PATH_DENYLIST,
+  RUNTIME_CACHING_RULES,
+  SHELL_PRECACHE_PATTERNS,
+} from './pwa-policy'
+
 const proxyTarget = process.env.API_PROXY_TARGET ?? 'http://127.0.0.1:8000'
 const allowedHosts = ['localhost', '127.0.0.1', '.e2b.app']
 
@@ -42,9 +48,11 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
+        globPatterns: [...SHELL_PRECACHE_PATTERNS],
         navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [API_PATH_DENYLIST],
+        runtimeCaching: [...RUNTIME_CACHING_RULES],
+        cleanupOutdatedCaches: true,
       },
     }),
   ],

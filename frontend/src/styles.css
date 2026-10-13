@@ -53,7 +53,8 @@ input {
 
 button:focus-visible,
 a:focus-visible,
-input:focus-visible {
+input:focus-visible,
+summary:focus-visible {
   outline: 3px solid #f2bd53;
   outline-offset: 2px;
   box-shadow: 0 0 0 6px var(--color-forest-900);
@@ -102,6 +103,19 @@ input:focus-visible {
 
   .alert-info {
     @apply border-forest-200 bg-forest-50 text-forest-900 rounded-xl border px-4 py-3 text-sm leading-6;
+  }
+
+  .alert-warning {
+    @apply rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-6 font-medium text-amber-950;
+  }
+
+  .text-link {
+    @apply text-forest-700 hover:text-forest-950 min-h-11 underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .secret-key {
+    @apply border-line bg-canvas text-ink block w-full overflow-x-auto rounded-xl border px-4 py-3 text-center font-mono text-sm font-bold tracking-wider;
+    overflow-wrap: anywhere;
   }
 
   .surface-card {
@@ -192,7 +206,8 @@ input:focus-visible {
 @media (forced-colors: active) {
   button:focus-visible,
   a:focus-visible,
-  input:focus-visible {
+  input:focus-visible,
+  summary:focus-visible {
     outline-color: Highlight;
     box-shadow: none;
   }

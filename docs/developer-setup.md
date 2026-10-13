@@ -13,6 +13,7 @@ From the repository root:
 ```sh
 cp .env.example .env
 python -c 'import secrets; print(secrets.token_urlsafe(64))'  # set DJANGO_SECRET_KEY in .env
+python -c 'import base64,secrets; print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode())'  # optional local MFA key
 python -c 'import secrets; print(secrets.token_hex(32))'       # set POSTGRES_PASSWORD in .env
 ```
 
@@ -22,7 +23,7 @@ Set `DATABASE_URL` to match the local `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POS
 postgresql://edutrack_local:<your-generated-hex-password>@127.0.0.1:5432/edutrack_local
 ```
 
-Replace the placeholder yourself in `.env`; do not paste or commit generated secrets. The root `.env` is git-ignored. The example values are local-only and must not be reused in a shared environment.
+Replace the placeholder yourself in `.env`; do not paste or commit generated secrets. The root `.env` is git-ignored. The example values are local-only and must not be reused in a shared environment. A separate 32-byte `MFA_ENCRYPTION_KEY` is needed only to exercise privileged TOTP enrollment. Leave `IDENTITY_RECOVERY_DELIVERY_BACKEND` blank and the recovery token lifetime at `0`; no delivery channel is included or assumed.
 
 If using Compose, start only the database and cache/broker:
 

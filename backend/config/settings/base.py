@@ -99,6 +99,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "core.middleware.PrivateApiCacheMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -154,6 +155,20 @@ CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SECURE = not DEBUG
 CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"
 
+# Identity controls are configurable, but recovery delivery remains disabled unless
+# an Owner-approved adapter and expiry policy are explicitly configured.
+MFA_ENCRYPTION_KEY = env.str("MFA_ENCRYPTION_KEY", default="")
+IDENTITY_MFA_SETUP_TTL_SECONDS = env.int("IDENTITY_MFA_SETUP_TTL_SECONDS", default=300)
+IDENTITY_RECOVERY_DELIVERY_BACKEND = env.str(
+    "IDENTITY_RECOVERY_DELIVERY_BACKEND", default=""
+)
+IDENTITY_RECOVERY_TOKEN_TTL_SECONDS = env.int(
+    "IDENTITY_RECOVERY_TOKEN_TTL_SECONDS", default=0
+)
+IDENTITY_LOGIN_RATE_LIMIT = env.str("IDENTITY_LOGIN_RATE_LIMIT", default="10/min")
+IDENTITY_MFA_RATE_LIMIT = env.str("IDENTITY_MFA_RATE_LIMIT", default="10/min")
+IDENTITY_RECOVERY_RATE_LIMIT = env.str("IDENTITY_RECOVERY_RATE_LIMIT", default="5/hour")
+
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
@@ -173,6 +188,11 @@ REST_FRAMEWORK = {
     "VERSION_PARAM": "version",
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
+    "DEFAULT_THROTTLE_RATES": {
+        "identity_login": IDENTITY_LOGIN_RATE_LIMIT,
+        "identity_mfa": IDENTITY_MFA_RATE_LIMIT,
+        "identity_recovery": IDENTITY_RECOVERY_RATE_LIMIT,
+    },
 }
 
 LOG_LEVEL = env.str("LOG_LEVEL", default="INFO").upper()

@@ -1,16 +1,26 @@
 import { useState, type FormEvent } from 'react'
 
+import { AccountRecoveryForm } from '@/components/AccountRecoveryForm'
 import { BrandMark } from '@/components/BrandMark'
 
 type LoginFormProps = {
+  notice?: string
   onSubmit: (username: string, password: string) => Promise<void>
+  onRecoveryRequest: (username: string) => Promise<string>
+  onRecoveryComplete: (token: string, newPassword: string) => Promise<string>
 }
 
-export function LoginForm({ onSubmit }: LoginFormProps) {
+export function LoginForm({
+  notice,
+  onSubmit,
+  onRecoveryRequest,
+  onRecoveryComplete,
+}: LoginFormProps) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showRecovery, setShowRecovery] = useState(false)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -29,6 +39,16 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (showRecovery) {
+    return (
+      <AccountRecoveryForm
+        onBack={() => setShowRecovery(false)}
+        onComplete={onRecoveryComplete}
+        onRequest={onRecoveryRequest}
+      />
+    )
   }
 
   return (
@@ -71,6 +91,11 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
               Use an account provisioned by an authorised school administrator.
               There is no public sign-up.
             </p>
+            {notice && (
+              <div className="alert-info mt-5" role="status">
+                {notice}
+              </div>
+            )}
 
             <form
               id="sign-in-form"
@@ -125,6 +150,13 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
                 verification. Do not share your password.
               </p>
             </form>
+            <button
+              className="text-link mt-5 w-full text-center"
+              onClick={() => setShowRecovery(true)}
+              type="button"
+            >
+              Account recovery
+            </button>
             <p className="text-muted mt-10 text-xs lg:hidden">
               E.P. Basic School · Ashaiman
             </p>

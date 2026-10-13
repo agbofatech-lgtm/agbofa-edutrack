@@ -1,24 +1,31 @@
 import uuid
-from collections.abc import Callable
-
-from django.http import HttpRequest, HttpResponse
-
-from core.logging import request_id_context
 
 
 class RequestIdMiddleware:
-    """Generate an untrusted-header-independent request ID for logs and responses."""
+    """Attach a generated request ID without trusting caller-controlled IDs."""
 
-    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
+    def __init__(self, get_response):
         self.get_response = get_response
 
-    def __call__(self, request: HttpRequest) -> HttpResponse:
-        request_id = uuid.uuid4().hex
-        request.request_id = request_id  # type: ignore[attr-defined]
-        token = request_id_context.set(request_id)
-        try:
-            response = self.get_response(request)
-            response["X-Request-ID"] = request_id
-            return response
-        finally:
-            request_id_context.reset(token)
+    def __call__(self, request):
+        request.request_id = uuid.uuid4().hex
+        response = self.get_response(request)
+        response["X-Request-ID"] = request.request_id
+        return response
+
+
+class PrivateApiCacheMiddleware:
+    """Prevent browsers and intermediaries from caching API/authentication data."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        if request.path_info == "/api" or request.path_info.startswith("/api/"):
+            response["Cache-Control"] = (
+                "private, no-store, no-cache, max-age=0, must-revalidate"
+            )
+            response["Pragma"] = "no-cache"
+            response["Expires"] = "0"
+        return response

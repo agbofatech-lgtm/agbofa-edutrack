@@ -1,3 +1,4 @@
+import base64
 import os
 import secrets
 
@@ -14,6 +15,9 @@ from .base import *  # noqa: E402,F403
 
 DEBUG = False
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+MFA_ENCRYPTION_KEY = base64.urlsafe_b64encode(secrets.token_bytes(32)).decode("ascii")
+IDENTITY_MFA_SETUP_TTL_SECONDS = 300
+IDENTITY_RECOVERY_TOKEN_TTL_SECONDS = 900
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",

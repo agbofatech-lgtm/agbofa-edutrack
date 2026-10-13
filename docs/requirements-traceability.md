@@ -2,7 +2,7 @@
 
 **Baseline:** AGBOFA EduTrack Master Requirements v1.5, draft for Owner review, dated 13 October 2026. The pasted document retains v1.4/v1.3 headings in carry-forward sections; this implementation treats the supplied v1.5 sections and their stated precedence as the baseline.
 
-**Authority:** The baseline itself says Owner Gate CLOSED and prohibits coding. The Owner separately confirmed that the direct Prompt 01 instruction is the explicit authorization for foundation-only implementation. This approval is limited to Prompt 01. It does not approve business modules, production migrations, live data, payment services, Railway resource changes/deployment, any school policy, DG/IG/RG gates, or Prompt 02.
+**Authority:** The original Prompt 01 work was authorized only as an engineering foundation. The Owner subsequently authorized Prompt 02/12 — Foundation and Identity on the Arena-assigned branch from verified Prompt 01 commit `cf3b69ebfa711c8be88e135afb2b956c4703fe8b`. That scope authorizes independently testable identity/PWA foundations only. It does not approve business modules, production/shared migrations, live data, payment services, Railway resources/deployment, school-specific policies, or Prompt 03.
 
 | Prompt 01 deliverable | Implemented evidence | Limit / status |
 |---|---|---|
@@ -14,7 +14,7 @@
 | Environment and logging | `config/settings/`, `.env.example`, request-ID middleware and JSON formatter | Production env has not been populated or deployed |
 | Auth/RBAC foundation | Session + CSRF endpoints, custom User, dynamic role/permission/scope models, fail-closed permission service, audit append-only ORM guards | No user/role seed, role/grant management API, automated grant-change auditing, MFA, login throttling, DB trigger or approved school permission matrix |
 | PostgreSQL data architecture | [Conceptual schema](architecture/data-architecture.md) | No migrations or business tables; no production DB connection |
-| Quality checks | `.github/workflows/ci.yml`, frontend and backend tests, Ruff, mypy, PyYAML/TOML config validation | CI has not run on GitHub until PR checks execute |
+| Quality checks | `.github/workflows/ci.yml`, frontend and backend tests, Ruff, mypy, PyYAML/TOML config validation | Prompt 01 run [#38392078479](https://github.com/agbofatech-lgtm/agbofa-edutrack/actions/runs/38392078479) passed on the verified baseline |
 | Architecture documentation | ADRs, module boundaries, threat model, data design, local setup, env reference and this traceability map | Some operational/policy details remain intentionally open |
 | Railway-ready configuration | `deploy/*.Dockerfile`, `railway.toml`, `deploy/railway-web.toml`, Nginx proxy template | Templates only; not deployed, not validated against a Railway project |
 
@@ -22,13 +22,19 @@
 
 No learner/candidate roster, grade policy, assessment/mocks, attendance, timetable, intervention, BECE analytics, reports, ranking, billing, payment capture, receipts, mock allowance payment, reconciliation, guardian portal, or business workflow is implemented. No school-specific classes, subjects, fees, grade bands, approval thresholds, financial accounts, or real data are invented. Future screens/integrations remain absent rather than advertised as live.
 
-## Evidence gaps / blocked items
+## Prompt 01 evidence gaps / blocked items
 
-- **BLOCKED LOCALLY — PostgreSQL:** no local PostgreSQL client/service or Docker executable was available. Local tests use isolated in-memory SQLite; the PR CI backend job is configured for an ephemeral PostgreSQL 16 service, with its result pending until GitHub checks run.
-- **BLOCKED — production migration review:** no migrations are included or run by design; Prompt 01 is limited to conceptual schema and identity model definitions.
-- **NOT EXECUTED — WCAG 2.2 AA audit, assistive-technology pass, 320px physical-device test, performance/bandwidth test, threat-model workshop, backup/restore, UAT, Railway config against live Railway, and GitHub CI results.**
-- **NOT APPROVED — actual school policies, names/signatures, roster, role-permission matrix, MFA/session policy, grade/ranking policy, fees/allowance schedules and payment providers.**
+- **BLOCKED LOCALLY — PostgreSQL:** no local PostgreSQL client/service or Docker executable was available. Local Prompt 01 tests used isolated in-memory SQLite; the verified-baseline GitHub run passed against its disposable PostgreSQL 16 service.
+- **BLOCKED — production migration review:** no migrations were included or run by design; no production/shared database was contacted.
+- **NOT EXECUTED — WCAG 2.2 AA audit, assistive-technology pass, 320px physical-device test, performance/bandwidth test, threat-model workshop, backup/restore, UAT, and Railway config against a live Railway project.**
+- **NOT APPROVED — actual school policies, roster, role-permission matrix, MFA/session policy, grade/ranking policy, fees/allowance schedules and payment providers.**
 
-## Prompt 02 preconditions
+## Prompt 02/12 — Foundation and Identity
 
-Do not proceed without explicit Owner approval. Prompt 02 should begin with a read-only review of this PR and resulting CI/security findings, resolve the relevant P0 authority/policy decisions, approve the schema and migration strategy, define MFA and account provisioning, perform a threat-model/accessibility review, and specify tests/evidence/rollback before any next milestone.
+**Authorization:** Owner authorized Prompt 02 implementation on the Arena-assigned branch `arena/a3f38ba6-agbofa-edutrack`, from baseline `cf3b69ebfa711c8be88e135afb2b956c4703fe8b`. The authorization is limited to testable identity/PWA foundations; it is not an acceptance of school policies or production use.
+
+**Implemented evidence:** see [Prompt 02 Foundation and Identity report](prompt-02-foundation-identity.md). Work preserves Prompt 01 session/CSRF, custom user, dynamic scoped RBAC, ORM-append-only audit, static-shell PWA and generic navigation. Prompt 02 adds generic session-expiry handling, provisional throttles, TOTP MFA for Django platform admin flags, encrypted TOTP seeds, disabled-by-default recovery delivery interface, hashed single-use recovery tokens, policy-neutral maker-checker contract, role-informed shell, no-store API handling, and tests.
+
+**Schema boundary:** `MfaCredential` and `AccountRecoveryToken` are identity security model definitions only. There are no committed migrations; CI may create their tables only inside its disposable PostgreSQL test service. No shared/production migration, seed, data import or deployment is authorized.
+
+**Owner decisions still required:** privileged school roles beyond Django platform-admin flags; approved recovery channel and identity-proofing process; MFA enrollment/reset/backup policy and secret-key custody; session duration and rate limits/trusted proxy identity; approved role/permission/scope matrix; maker-checker policy; field-level schema/migration/rollback and audit retention/DB immutability; full accessibility and security review. Until these decisions are made, no external recovery adapter, production migration, business endpoint or deployment may be enabled.

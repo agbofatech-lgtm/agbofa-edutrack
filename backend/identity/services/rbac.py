@@ -23,6 +23,40 @@ def _active_permission_grants(user: Any, permission_code: str) -> QuerySet[Scope
     )
 
 
+def active_permission_codes(user: Any) -> tuple[str, ...]:
+    """Return permission identifiers from effective grants for UI hinting only."""
+
+    if not getattr(user, "is_authenticated", False) or not getattr(
+        user, "is_active", False
+    ):
+        return ()
+    now = timezone.now()
+    grants = ScopeGrant.objects.filter(
+        user_id=user.pk,
+        is_active=True,
+        role__is_active=True,
+        valid_from__lte=now,
+    ).filter(Q(valid_until__isnull=True) | Q(valid_until__gt=now))
+    return tuple(sorted(set(grants.values_list("role__permissions__code", flat=True))))
+
+
+def active_role_labels(user: Any) -> tuple[str, ...]:
+    """Return currently effective role labels for the signed-in user's shell."""
+
+    if not getattr(user, "is_authenticated", False) or not getattr(
+        user, "is_active", False
+    ):
+        return ()
+    now = timezone.now()
+    grants = ScopeGrant.objects.filter(
+        user_id=user.pk,
+        is_active=True,
+        role__is_active=True,
+        valid_from__lte=now,
+    ).filter(Q(valid_until__isnull=True) | Q(valid_until__gt=now))
+    return tuple(sorted(set(grants.values_list("role__label", flat=True))))
+
+
 def user_has_permission(
     user: Any,
     permission_code: str,

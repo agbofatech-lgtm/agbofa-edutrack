@@ -189,3 +189,52 @@ class AuditEvent(models.Model):
 
     def delete(self, *args: object, **kwargs: object) -> tuple[int, dict[str, int]]:
         raise ValidationError("Audit events are append-only and cannot be deleted.")
+
+
+class MfaCredential(models.Model):
+    """One TOTP factor per account; its secret is authenticated-encrypted."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="mfa_credential",
+    )
+    secret_ciphertext = models.BinaryField()
+    is_enabled = models.BooleanField(default=False)
+    setup_expires_at = models.DateTimeField(null=True, blank=True)
+    enabled_at = models.DateTimeField(null=True, blank=True)
+    last_verified_counter = models.BigIntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "identity_mfa_credential"
+
+
+class AccountRecoveryToken(models.Model):
+    """Single-use recovery token digest; the raw token is never persisted."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="recovery_tokens",
+    )
+    token_digest = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+    expires_at = models.DateTimeField()
+    consumed_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "identity_account_recovery_token"
+        indexes = [
+            models.Index(
+                fields=["user", "expires_at"], name="identity_recovery_user_exp_idx"
+            )
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(expires_at__gt=F("created_at")),
+                name="identity_recovery_expiry_after_create",
+            )
+        ]
