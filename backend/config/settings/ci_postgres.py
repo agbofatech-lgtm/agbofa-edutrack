@@ -1,3 +1,4 @@
+
 """CI-only PostgreSQL test settings; requires a disposable database URL."""
 
 import os
@@ -8,6 +9,7 @@ from django.core.exceptions import ImproperlyConfigured
 from .test import *  # noqa: F403
 
 DATABASE_URL = os.environ.get("EDUTRACK_CI_TEST_DATABASE_URL", "").strip()
+
 if not DATABASE_URL.startswith(("postgres://", "postgresql://")):
     raise ImproperlyConfigured(
         "EDUTRACK_CI_TEST_DATABASE_URL must point to a disposable PostgreSQL database."
@@ -15,5 +17,20 @@ if not DATABASE_URL.startswith(("postgres://", "postgresql://")):
 
 # Override test.py's in-memory SQLite URL only in this explicit CI settings module.
 os.environ["DATABASE_URL"] = DATABASE_URL
+
 DATABASES = {"default": environ.Env.db_url_config(DATABASE_URL)}
-DATABASES["default"].update(CONN_MAX_AGE=0, CONN_HEALTH_CHECKS=True)
+DATABASES["default"].update(
+    CONN_MAX_AGE=0,
+    CONN_HEALTH_CHECKS=True,
+)
+
+# CI-only: construct tables in the disposable PostgreSQL test database.
+# ADR-0003 prohibits committed migrations during Prompt 01.
+# Never use this configuration for shared or production databases.
+MIGRATION_MODULES = {
+    "auth": None,
+    "contenttypes": None,
+    "sessions": None,
+    "identity": None,
+    "core": None,
+}

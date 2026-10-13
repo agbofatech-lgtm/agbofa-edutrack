@@ -1,4 +1,3 @@
-
 import { render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -72,9 +71,7 @@ describe('application foundation shell', () => {
     ).toBeInTheDocument()
 
     expect(
-      screen.queryByText(
-        /BECE analytics|collections|candidate register/i,
-      ),
+      screen.queryByText(/BECE analytics|collections|candidate register/i),
     ).not.toBeInTheDocument()
 
     await waitFor(() => {
@@ -83,10 +80,7 @@ describe('application foundation shell', () => {
   })
 
   it('shows an explicit retryable error rather than fabricated availability when the API is offline', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockRejectedValue(new TypeError('offline')),
-    )
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')))
 
     render(<App />)
 
