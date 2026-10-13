@@ -1,4 +1,3 @@
-
 """CI-only PostgreSQL test settings; requires a disposable database URL."""
 
 import os
