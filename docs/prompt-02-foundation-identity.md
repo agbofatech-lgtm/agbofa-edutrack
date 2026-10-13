@@ -51,7 +51,8 @@ No migration files were added, generated or run. The new MFA and recovery models
 | detect-secrets source scan | Passed; no unallowlisted findings. Test-only fixture values are explicitly allowlisted. |
 | Configuration validation and `git diff --check` | Passed |
 | Django CI/PostgreSQL settings check | Passed as a settings/system check with a placeholder database URL; it did **not** connect to PostgreSQL or run the test suite. |
-| PostgreSQL-backed CI test suite | Must be judged from the GitHub Actions run for the pushed branch revision; no local PostgreSQL service/client or Docker runtime was available for this implementation run. |
+| PostgreSQL-backed CI test suite | **Passed** in [GitHub Actions run 38397982478](https://github.com/agbofatech-lgtm/agbofa-edutrack/actions/runs/38397982478), implementation commit `1c4dd155afef209a8174a5585afa96ea8f638c7d`; Backend checks ran with the workflow's disposable PostgreSQL 16 service and `config.settings.ci_postgres`. |
+| GitHub Actions summary | Frontend checks, Backend checks and Secret and dependency review all passed. Pull request dependency review was skipped because this was a push-triggered run. |
 
 Passing local checks do not constitute a full WCAG 2.2 AA audit, penetration test, production security review, backup/restore test, or school UAT.
 
