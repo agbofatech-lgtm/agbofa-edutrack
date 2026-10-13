@@ -14,7 +14,7 @@ backend-install:
 backend-check:
 	PYTHONPATH=backend DJANGO_SETTINGS_MODULE=config.settings.test python backend/manage.py check
 	PYTHONPATH=backend DJANGO_SETTINGS_MODULE=config.settings.test pytest backend
-	cd backend && ruff check . && ruff format --check . && mypy config core identity
+	cd backend && ruff check . && ruff format --check . && mypy config core identity institutional
 
 config-check:
 	python scripts/validate_config.py

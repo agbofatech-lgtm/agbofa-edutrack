@@ -88,6 +88,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "core.apps.CoreConfig",
     "identity.apps.IdentityConfig",
+    "institutional.apps.InstitutionalConfig",
 ]
 
 MIDDLEWARE = [

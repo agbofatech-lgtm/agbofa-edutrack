@@ -24,7 +24,8 @@ DATABASES["default"].update(
 )
 
 # CI-only: construct tables in the disposable PostgreSQL test database.
-# ADR-0003 prohibits committed migrations during Prompt 01.
+# Institutional migrations are applied; selected legacy foundation apps remain
+# unmigrated and are created only in this disposable test database.
 # Never use this configuration for shared or production databases.
 MIGRATION_MODULES = {
     "auth": None,

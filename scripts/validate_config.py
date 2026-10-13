@@ -90,7 +90,7 @@ def validate_workflow() -> None:
         ("npm test", "frontend tests"),
         ("npm run build", "frontend build"),
         ("pytest backend", "backend tests"),
-        ("mypy config core identity", "backend typecheck"),
+        ("mypy config core identity institutional", "backend typecheck"),
         ("pip-audit", "backend dependency audit"),
         ("npm audit", "frontend dependency audit"),
         ("detect-secrets-hook", "source secret scan"),

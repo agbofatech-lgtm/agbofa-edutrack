@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 
 from core.api.v1.auth import (
     CsrfTokenView,
@@ -16,6 +16,13 @@ app_name = "v1"
 urlpatterns = [
     path("health/live/", LivenessView.as_view(), name="health-live"),
     path("health/ready/", ReadinessView.as_view(), name="health-ready"),
+    path(
+        "",
+        include(
+            ("institutional.api.v1.urls", "institutional"),
+            namespace="institutional",
+        ),
+    ),
     path("auth/csrf/", CsrfTokenView.as_view(), name="auth-csrf"),
     path("auth/session/", SessionView.as_view(), name="auth-session"),
     path("auth/logout/", LogoutView.as_view(), name="auth-logout"),

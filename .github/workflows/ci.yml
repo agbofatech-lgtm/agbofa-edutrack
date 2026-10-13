@@ -93,7 +93,7 @@ jobs:
           ruff format --check .
       - name: Python type check
         working-directory: backend
-        run: mypy config core identity
+        run: mypy config core identity institutional
       - name: CI, Compose and Railway configuration validation
         run: python scripts/validate_config.py
 

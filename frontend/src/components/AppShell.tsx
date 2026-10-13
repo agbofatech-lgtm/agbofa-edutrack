@@ -2,17 +2,24 @@ import { useState } from 'react'
 
 import type { AuthenticatedSession } from '@/api/client'
 import { BrandMark } from '@/components/BrandMark'
+import { InstitutionConfiguration } from '@/components/InstitutionConfiguration'
 import { PwaNotice } from '@/components/PwaNotice'
 
 type AppShellProps = {
   user: AuthenticatedSession['user']
   sessionExpiresAt: string
+  csrfToken?: string | null
   onSignOut: () => Promise<void>
 }
 
-type ShellPage = 'overview' | 'security'
+type ShellPage = 'overview' | 'security' | 'configuration'
 
-export function AppShell({ user, sessionExpiresAt, onSignOut }: AppShellProps) {
+export function AppShell({
+  user,
+  sessionExpiresAt,
+  csrfToken = null,
+  onSignOut,
+}: AppShellProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [activePage, setActivePage] = useState<ShellPage>('overview')
   const [signOutError, setSignOutError] = useState<string | null>(null)
@@ -112,6 +119,20 @@ export function AppShell({ user, sessionExpiresAt, onSignOut }: AppShellProps) {
               <span aria-hidden="true" className="nav-indicator" />
               Overview
             </a>
+            {(user.permissions.includes('institution.configuration.read') ||
+              user.permissions.includes('institution.create')) && (
+              <a
+                aria-current={
+                  activePage === 'configuration' ? 'page' : undefined
+                }
+                className={`nav-link ${activePage === 'configuration' ? 'nav-link-active' : ''}`}
+                href="#main-content"
+                onClick={() => selectPage('configuration')}
+              >
+                <span aria-hidden="true" className="nav-indicator" />
+                Institutional configuration
+              </a>
+            )}
             {user.isPrivileged && (
               <a
                 aria-current={activePage === 'security' ? 'page' : undefined}
@@ -146,7 +167,14 @@ export function AppShell({ user, sessionExpiresAt, onSignOut }: AppShellProps) {
                 {signOutError}
               </div>
             )}
-            {activePage === 'security' && user.isPrivileged ? (
+            {activePage === 'configuration' &&
+            (user.permissions.includes('institution.configuration.read') ||
+              user.permissions.includes('institution.create')) ? (
+              <InstitutionConfiguration
+                csrfToken={csrfToken}
+                permissions={user.permissions}
+              />
+            ) : activePage === 'security' && user.isPrivileged ? (
               <section
                 aria-labelledby="account-security-title"
                 id="account-security"

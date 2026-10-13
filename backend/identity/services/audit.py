@@ -20,6 +20,16 @@ AUDIT_ACTIONS = frozenset(
         "identity.recovery.requested",
         "identity.recovery.completed",
         "identity.maker_checker.evaluated",
+        "institution.created",
+        "institution.configuration.release.created",
+        "institution.configuration.release.submitted",
+        "institution.configuration.release.approved",
+        "institution.configuration.record.created",
+        "institution.configuration.record.updated",
+        "institution.staff.membership.created",
+        "institution.staff.membership.updated",
+        "institution.enrolment.created",
+        "institution.enrolment.updated",
     }
 )
 _SENSITIVE_METADATA_KEYS = frozenset(

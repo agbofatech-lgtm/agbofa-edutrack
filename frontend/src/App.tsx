@@ -274,6 +274,7 @@ export default function App() {
 
   return (
     <AppShell
+      csrfToken={csrfToken}
       onSignOut={handleSignOut}
       sessionExpiresAt={applicationState.session.sessionExpiresAt}
       user={applicationState.session.user}

@@ -1,69 +1,75 @@
-# Conceptual PostgreSQL data architecture — proposed, not migrated
+# Institutional and future-domain data architecture
 
-This document maps the Master Requirements v1.5 concepts into a future relational design. It is not an approved field-level schema, a migration plan, or evidence of existing school records. The concrete model definitions are limited to technical identity/RBAC, append-only audit, encrypted TOTP credential, and hashed one-time recovery-token primitives. No migration is committed and no learner or finance tables exist; CI creates unmigrated tables only in a disposable test database.
+## Status and scope
 
-## Proposed entity groups
+Prompt 03 introduces a concrete `institutional` Django app and an initial, additive `0001_initial` migration. The migration is exercised only by disposable tests and the configured disposable PostgreSQL CI service; it has not been applied to shared or production infrastructure. No institution rows or school policy values are included. Identity MFA/recovery tables retain their prior CI-only table-creation arrangement.
+
+This schema is a configuration foundation, not the field-level schema for AIM-01 through AIM-06. It deliberately does not create a `Learner` or guardian model, assessment results, attendance, intervention, reporting, finance, fee, mock, allowance, payment, receipt or ledger records. No future AIM module is implemented.
+
+## Implemented institutional entities
 
 ```mermaid
 erDiagram
-    USER ||--o{ SCOPE_GRANT : receives
-    USER ||--o{ AUDIT_EVENT : performs
-    ROLE ||--o{ SCOPE_GRANT : grants
-    ROLE ||--o{ ROLE_PERMISSION : includes
-    PERMISSION ||--o{ ROLE_PERMISSION : names
-    SCHOOL ||--o{ ACADEMIC_YEAR : configures
-    ACADEMIC_YEAR ||--o{ TERM : contains
-    LEVEL ||--o{ CLASS : organizes
-    CLASS ||--o{ ENROLMENT : hosts
-    LEARNER ||--o{ ENROLMENT : participates
-    LEARNER ||--o{ ASSESSMENT_RESULT : earns
-    ASSESSMENT ||--o{ ASSESSMENT_RESULT : records
-    LEARNER ||--o{ INTERVENTION_CASE : receives
-    REPORT_TEMPLATE_VERSION ||--o{ REPORT_SNAPSHOT : renders
-    LEARNER ||--o{ REPORT_SNAPSHOT : represented_by
-    LEARNER ||--o{ INVOICE : billed_by
-    INVOICE ||--o{ INVOICE_LINE : itemizes
-    PAYMENT ||--o{ PAYMENT_ALLOCATION : allocates
-    INVOICE ||--o{ PAYMENT_ALLOCATION : receives
-    PAYMENT ||--o{ RECEIPT : evidences
-    JOURNAL_ENTRY ||--o{ JOURNAL_LINE : posts
-    ACCOUNT ||--o{ JOURNAL_LINE : classifies
+    USER ||--o{ CONFIGURATION_RELEASE : authors
+    USER ||--o{ CONFIGURATION_RELEASE : approves
+    USER ||--o{ STAFF_MEMBERSHIP : affiliated_as
+    USER ||--o{ STAFF_MEMBERSHIP : creates
+    USER ||--o{ ENROLMENT : places
+    INSTITUTION ||--o{ CONFIGURATION_RELEASE : versions
+    CONFIGURATION_RELEASE ||--o{ CONFIGURATION_RELEASE : revises
+    CONFIGURATION_RELEASE ||--o{ INSTITUTION_SETTING : contains
+    CONFIGURATION_RELEASE ||--o{ ACADEMIC_YEAR : contains
+    ACADEMIC_YEAR ||--o{ ACADEMIC_TERM : contains
+    CONFIGURATION_RELEASE ||--o{ EDUCATIONAL_LEVEL : contains
+    EDUCATIONAL_LEVEL ||--o{ SCHOOL_CLASS : organizes
+    SCHOOL_CLASS ||--o{ STREAM : contains
+    CONFIGURATION_RELEASE ||--o{ SUBJECT : contains
+    ACADEMIC_YEAR ||--o{ SUBJECT_OFFERING : scopes
+    ACADEMIC_TERM o|--o{ SUBJECT_OFFERING : optionally_scopes
+    SCHOOL_CLASS ||--o{ SUBJECT_OFFERING : offers
+    STREAM o|--o{ SUBJECT_OFFERING : optionally_offers
+    SUBJECT ||--o{ SUBJECT_OFFERING : catalogues
+    SUBJECT_OFFERING ||--o{ TEACHING_ASSIGNMENT : assigned
+    STAFF_MEMBERSHIP ||--o{ TEACHING_ASSIGNMENT : teaches
+    INSTITUTION ||--o{ STAFF_MEMBERSHIP : affiliates
+    INSTITUTION ||--o{ ENROLMENT : places
+    CONFIGURATION_RELEASE ||--o{ ENROLMENT : validates_against
+    ACADEMIC_YEAR ||--o{ ENROLMENT : covers
+    SCHOOL_CLASS ||--o{ ENROLMENT : places_in
+    STREAM o|--o{ ENROLMENT : optionally_places_in
 ```
 
-### Identity / governance
+### Tenant and release boundary
 
-`User`, `Role`, `Permission`, `RolePermission`, `ScopeGrant`, `ApprovalDelegation`, `AuditEvent`, `ConfigDefinition`, `ConfigVersion`, `ChangeRequest`, `ImpactReview`, `Approval`, `FeatureFlag`.
+- `Institution` is a UUID tenant root with an owner-entered code and name; timezone and locale are not stored on this unversioned row. No institution is seeded.
+- `ConfigurationRelease` identifies an institution, immutable revision number, optional approved source revision, explicit `effective_from` date, author, submission evidence and independent approver evidence. Draft → submitted → approved is the only forward lifecycle. Author self-approval, reopening and approved edits are rejected; one approved release may begin on a given date per institution.
+- Release-scoped settings, calendar, class/stream, subject/offering and teaching-assignment records use UUIDs. Foreign-key dependencies must belong to the same release (and, for staff affiliations, the same institution). A revision may clone a prior approved snapshot, leaving that earlier release intact.
+- Effective-release resolution requires a caller-supplied institution-local `date`. The application does not guess timezone, locale or calendar policy.
 
-The code defines `User`, `AccessRole`, `AccessPermission`, `RolePermission`, `ScopeGrant`, `AuditEvent`, `MfaCredential`, and `AccountRecoveryToken`. MFA ciphertext and recovery token digests are technical security fields; no raw recovery token is stored. No sample roles/permissions are seeded. A school-approved role-permission matrix and record-scope vocabulary are prerequisites to assigning real grants. Field-level schema/migration review remains required before any shared or production use.
+### Configuration catalogue
 
-### School / academic foundation
+- `InstitutionSetting` stores typed, versioned JSON values (`text`, `integer`, `decimal`, `boolean`, `date`, or `json`). Password-, secret-, token-, credential- and API-key-like keys or nested fields are rejected. This is not a secret store.
+- `AcademicYear` and `AcademicTerm` model dates and within-year sequence; `EducationalLevel`, `SchoolClass` and `Stream` model structural placement. Dates, codes and labels are entered by authorized users; the project does not presume a local academic calendar, class names or policies.
+- `Subject` and `SubjectOffering` model a catalogue and its class/stream/year/term relationships. No subject list is embedded in code.
+- `TeachingAssignment` links an offering to an institution staff affiliation with an effective period. It does not create RBAC permissions or imply an approved teaching policy.
 
-`School`, `AcademicYear`, `Term`, `Level`, `Class`, `Stream`, `Subject`, `StaffProfile`, `TeacherAssignment`, `Learner`, `GuardianLink`, `Enrolment`. Staff profiles and school accounts are related but distinct identities. These must support the whole-school Nursery–Basic 9 record hierarchy from the outset even if operational activation initially targets Basic 7–9. Use stable internal identifiers; never encode school-specific names or classes as application code.
+### Staff and enrolment foundations
 
-### Academic / recovery / reporting
+- `InstitutionStaffMembership` links an existing active account to an institution over an effective period. It is distinct from an `AccessRole`, permission or scope grant; affiliation never grants authorization. Account provisioning and role assignment remain separate processes.
+- `Enrolment` stores institution, approved release, academic year, class, optional stream, dates, creator and an opaque UUID `learner_reference`. There is intentionally no `Learner` table, name, guardian link, contact detail, demographic attribute or learner-profile endpoint. A future registry must define and approve the reference relationship before adding learner-level data.
+- Teaching assignments and enrolment placements are checked against institution/revision/year/class/stream dependencies and effective-period order. Membership and enrolment changes are restricted to closing open periods; the original placement facts are not rewritten.
 
-`AssessmentSchemeVersion`, `Assessment`, `Mark`, `Moderation`, `MockExamination`, `MockCandidate`, `MockItem`, `Lesson`, `TimetableSlot`, `AttendanceRecord`, `InterventionPlan`, `TopicGap`, `Alert`, `ReportTemplateVersion`, `ReportSnapshot`, `PublicationEvent`, `Signatory`.
+## Integrity, permissions and audit
 
-Academic policy, assessment comparability, missingness, grades/ranking, template components and effective periods must be reviewed before fields and constraints are frozen.
+- Database constraints enforce scoped code uniqueness, date order, revision uniqueness, and required relationships. Model/service validation enforces cross-table dependency and effective-date invariants; API serializers also limit related objects to the route institution/revision.
+- Reads and writes are authorized by server-side RBAC at the exact institution scope. Global institution creation is separately gated, and creating an institution does not grant a read or management scope.
+- Release changes, configuration record writes, membership actions and enrolment actions record allow-listed audit evidence without request bodies, credentials or learner personal data. ORM guards do not protect against raw SQL, database owners or privileged compromise; database-level immutability and retention remain open governance/security gates.
+- No role, permission, user, school, calendar, class, subject, rate, fee, entitlement or finance data is seeded.
 
-### Finance (core scope, independently gated activation)
+## Compatibility boundary for AIM-01 through AIM-06
 
-`FeePolicyVersion`, `FeeSchedule`, `Invoice`, `InvoiceLine`, `Payment`, `Allocation`, `Credit`, `Receipt`, `ConcessionAward`, `ExpenseRequest`, `Account`, `JournalEntry`, `JournalLine`, `Reconciliation`, `ClosePeriod`, `MockAllowancePolicyVersion`, `MockAllowanceEntitlement`, and `DisbursementEvidence`.
+Future authorized modules may build on stable institution/release UUIDs, academic-year/term and class/stream references, subject offerings, staff affiliation/teaching assignment, exact-scope RBAC and the opaque learner reference. They must define their own policy versions, approvals, validation, audit, privacy and migrations. This foundation creates no AIM endpoints or workflows and does not assume module-specific semantics from identifiers alone.
 
-Mock allowance entitlements must preserve the established rate version, beneficiary, approved mock, eligibility evidence, Headmaster approval (including own-beneficiary transparency), Accounts processing, and actual payment state; approval alone must not auto-disburse.
+## Production and design gates
 
-Amounts should use fixed-precision `NUMERIC`, not floating point. Issued invoices, receipts and posted journals must preserve a policy/template snapshot and immutable source references. Corrections should be reversals/credit notes, never deletion. Provider callback/idempotency and maker-checker rules need an approved financial design before implementation.
-
-## PostgreSQL design controls for the next schema gate
-
-- Primary keys: UUIDs for externally addressable domain records; internal sequence keys may be selected for high-volume internal joins after review.
-- Dates/times: `timestamptz`, UTC storage, explicit academic local-date policy; distinguish effective periods from record-created time.
-- Integrity: foreign keys, unique idempotency keys, check constraints, exclusion/overlap constraints where justified, and indexes aligned to scope-filtered queries.
-- History: policy/template versions, audit events, publication snapshots and ledger entries are append-only; updates should create revisions or reversing events.
-- Record scoping: design each domain's ownership key and permitted scope hierarchy with row-access service contracts. Never rely on opaque frontend filters or a global role label.
-- Privacy: minimize copied identity/guardian attributes, define consent/retention/export/deletion rules, and avoid broad analytics replicas before review.
-- Operations: migrations must be reviewed, tested against representative anonymized fixtures, backed up, reversible or forward-fixable, and approved before production execution.
-
-## Explicit non-deliverables
-
-No learner, guardian, class, subject, assessment, attendance, intervention, report, invoice, payment, receipt, account, ledger, expenditure, reconciliation or provider schema/migration is included here. No production database was contacted.
+Before any shared or production use: Owner acceptance of this implementation; field-level schema/security review; decisions on account/grant provisioning, school permission scopes, audit retention/DB immutability, effective-date interpretation and migration ownership; an approved migration/rollback or forward-fix plan; backup/restore evidence; controlled synthetic-to-real onboarding; independent security/accessibility review; and a separate deployment authorization. No production database was contacted by this work.
