@@ -14,6 +14,7 @@ from core.api.v1.health import LivenessView, ReadinessView
 app_name = "v1"
 
 urlpatterns = [
+    path("", include(("academic.api.v1.urls", "academic"), namespace="academic")),
     path("health/live/", LivenessView.as_view(), name="health-live"),
     path("health/ready/", ReadinessView.as_view(), name="health-ready"),
     path(

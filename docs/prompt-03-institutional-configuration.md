@@ -1,5 +1,7 @@
 # Prompt 03 — Institutional Configuration Implementation Report
 
+> **Historical report.** Its pending-acceptance and CI statements describe the state when this report was written; the Owner subsequently accepted Phase 03 at `3e3058096b9a846c3134522e346ebf4e8eb8ffea` with historical Actions run `38445876874`. Phase 04 is on this session's fixed `arena/08c6c981-agbofa-edutrack` branch, not on the branch named below. See [Phase 04 report](prompt-04-candidate-academic-operations.md).
+
 **Status:** Engineering implementation and local verification are complete; PostgreSQL-backed GitHub Actions evidence is pending after the authorized branch push. Owner acceptance has not been granted. This is not production authorization.
 
 **Authorized branch:** `arena/a3f38ba6-agbofa-edutrack` (fixed for this Arena session)

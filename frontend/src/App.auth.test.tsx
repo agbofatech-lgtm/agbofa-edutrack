@@ -84,7 +84,7 @@ describe('privileged authentication flow', () => {
 
     expect(
       await screen.findByRole('heading', {
-        name: /ready for the next approved stage/i,
+        name: /ready for approved operations/i,
       }),
     ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('link', { name: 'Account security' }))

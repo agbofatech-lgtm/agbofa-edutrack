@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import type { AuthenticatedSession } from '@/api/client'
 import { BrandMark } from '@/components/BrandMark'
+import { AcademicWorkspace } from '@/components/academic/AcademicWorkspace'
 import { InstitutionConfiguration } from '@/components/InstitutionConfiguration'
 import { PwaNotice } from '@/components/PwaNotice'
 
@@ -12,7 +13,7 @@ type AppShellProps = {
   onSignOut: () => Promise<void>
 }
 
-type ShellPage = 'overview' | 'security' | 'configuration'
+type ShellPage = 'overview' | 'security' | 'configuration' | 'academics'
 
 export function AppShell({
   user,
@@ -133,6 +134,17 @@ export function AppShell({
                 Institutional configuration
               </a>
             )}
+            {user.permissions.some((code) => code.startsWith('academic.')) && (
+              <a
+                aria-current={activePage === 'academics' ? 'page' : undefined}
+                className={`nav-link ${activePage === 'academics' ? 'nav-link-active' : ''}`}
+                href="#main-content"
+                onClick={() => selectPage('academics')}
+              >
+                <span aria-hidden="true" className="nav-indicator" />
+                Academic operations
+              </a>
+            )}
             {user.isPrivileged && (
               <a
                 aria-current={activePage === 'security' ? 'page' : undefined}
@@ -171,6 +183,12 @@ export function AppShell({
             (user.permissions.includes('institution.configuration.read') ||
               user.permissions.includes('institution.create')) ? (
               <InstitutionConfiguration
+                csrfToken={csrfToken}
+                permissions={user.permissions}
+              />
+            ) : activePage === 'academics' &&
+              user.permissions.some((code) => code.startsWith('academic.')) ? (
+              <AcademicWorkspace
                 csrfToken={csrfToken}
                 permissions={user.permissions}
               />
@@ -230,12 +248,13 @@ export function AppShell({
                 <div className="mb-8">
                   <p className="eyebrow">Foundation milestone</p>
                   <h1 className="text-ink mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-                    Your workspace is ready for the next approved stage.
+                    Your workspace is ready for approved operations.
                   </h1>
                   <p className="text-muted mt-4 max-w-3xl text-base leading-7">
-                    This release establishes the application shell,
-                    authentication, and engineering controls. School operations
-                    are intentionally not represented here.
+                    This release preserves the secure foundation and adds
+                    institution-scoped candidate and academic source records.
+                    Operations remain subject to your grants and unapproved
+                    institutional policies remain blocked.
                   </p>
                 </div>
 
@@ -246,7 +265,7 @@ export function AppShell({
                   <div aria-hidden="true" className="hero-decoration" />
                   <div className="relative z-10 max-w-3xl">
                     <span className="text-forest-50 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide">
-                      No operational records in this milestone
+                      No invented school records or metrics
                     </span>
                     <h2
                       id="scope-title"
@@ -255,9 +274,10 @@ export function AppShell({
                       Built for trustworthy school records.
                     </h2>
                     <p className="mt-3 max-w-2xl leading-7 text-white/80">
-                      Learner, academic, reporting, intervention, and finance
-                      modules remain outside this foundation milestone. No
-                      simulated figures or sample learner records are shown.
+                      Candidate, baseline, weekly and mock source operations are
+                      available only to explicitly scoped staff. Intelligence,
+                      attendance, interventions, official outcomes and finance
+                      operations are not represented as live features.
                     </p>
                   </div>
                 </section>
@@ -299,15 +319,15 @@ export function AppShell({
                       Deliberately limited
                     </h2>
                     <p className="text-muted mt-2 text-sm leading-6">
-                      No academic policies, fees, learner information, payment
-                      rails, or production records have been configured in this
-                      release.
+                      No school scoring rules, fees, payment rails, actual
+                      learner information or production records are included in
+                      this source release.
                     </p>
                   </section>
                 </div>
                 <footer className="border-line text-muted mt-9 border-t pt-5 text-xs leading-5">
-                  AGBOFA EduTrack · Foundation only · This screen does not
-                  report live school performance or financial status.
+                  AGBOFA EduTrack · Phase 04 source workspace · This screen does
+                  not report live school performance or financial status.
                 </footer>
               </>
             )}

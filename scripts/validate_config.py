@@ -90,7 +90,9 @@ def validate_workflow() -> None:
         ("npm test", "frontend tests"),
         ("npm run build", "frontend build"),
         ("pytest backend", "backend tests"),
-        ("mypy config core identity institutional", "backend typecheck"),
+        ("mypy config core identity institutional academic", "backend typecheck"),
+        ("makemigrations --check --dry-run academic institutional", "migration drift"),
+        ("migrate academic zero --noinput", "disposable migration reversal"),
         ("pip-audit", "backend dependency audit"),
         ("npm audit", "frontend dependency audit"),
         ("detect-secrets-hook", "source secret scan"),
@@ -140,6 +142,9 @@ def validate_environment_template() -> None:
         "POSTGRES_PASSWORD",
         "DATABASE_URL",
         "IDENTITY_RECOVERY_DELIVERY_BACKEND",
+        "ACADEMIC_MOCK_PREPARER_ROLE_CODE",
+        "ACADEMIC_MOCK_APPROVER_ROLE_CODE",
+        "ACADEMIC_BECE_LEVEL_CODE",
     ):
         require(
             values.get(secret_key, "") == "",

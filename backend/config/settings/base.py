@@ -89,6 +89,7 @@ INSTALLED_APPS = [
     "core.apps.CoreConfig",
     "identity.apps.IdentityConfig",
     "institutional.apps.InstitutionalConfig",
+    "academic.apps.AcademicConfig",
 ]
 
 MIDDLEWARE = [
@@ -195,6 +196,16 @@ REST_FRAMEWORK = {
         "identity_recovery": IDENTITY_RECOVERY_RATE_LIMIT,
     },
 }
+
+ACADEMIC_MOCK_APPROVER_ROLE_CODE = env.str(
+    "ACADEMIC_MOCK_APPROVER_ROLE_CODE", default=""
+)
+ACADEMIC_MOCK_PREPARER_ROLE_CODE = env.str(
+    "ACADEMIC_MOCK_PREPARER_ROLE_CODE", default=""
+)
+# An Owner-approved Basic 9 level code; empty by default so no BECE mock may run.
+ACADEMIC_BECE_LEVEL_CODE = env.str("ACADEMIC_BECE_LEVEL_CODE", default="")
+DATA_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024
 
 LOG_LEVEL = env.str("LOG_LEVEL", default="INFO").upper()
 LOGGING = {

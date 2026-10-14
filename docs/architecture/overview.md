@@ -1,8 +1,8 @@
-# Architecture overview — Prompt 01/02 foundation and Prompt 03 configuration
+# Architecture overview — Phases 01–04 source foundations
 
 ## Status and scope
 
-This is an owner-controlled modular-monolith engineering foundation, not a deployed or school-approved production system. Prompt 01/02 authentication, identity, PWA and CI foundations are preserved. Prompt 03 adds an institution-aware versioned configuration foundation; implementation acceptance remains with the Owner. AIM-01 through AIM-06 and later operational modules, policy activation, live data, shared/production migration execution, pilot and release gates remain closed.
+This is an owner-controlled modular-monolith engineering foundation, not a deployed or school-approved production system. Prompt 01/02 authentication, identity, PWA and CI foundations are preserved. Prompt 03 added accepted institution-aware versioned configuration. Phase 04 now adds candidate, BA-0, weekly and monthly mock **source** operations for Owner review. Policy activation, live data, shared/production migrations, pilot and release gates remain closed; attendance, interventions, intelligence, finance and later phases are not implemented.
 
 ## System context
 
@@ -28,15 +28,19 @@ Local development uses Vite on `:5173`, Django on `:8000`, PostgreSQL and Redis 
 
 ```mermaid
 flowchart TD
-    UI[frontend shell and configuration forms] --> HTTP[versioned API contracts]
+    UI[frontend shell, configuration and academic source forms] --> HTTP[versioned API contracts]
     HTTP --> CORE[core: health, request IDs, logging]
     HTTP --> ID[identity: user, role, permission, scope, audit]
     HTTP --> INST[institutional: versioned configuration and placements]
+    HTTP --> ACAD[academic: candidate, BA-0, weekly and mock sources]
+    ACAD --> INST
+    ACAD --> ID
+    ACAD --> DB[(PostgreSQL)]
     ID --> DB[(PostgreSQL)]
     CORE --> DB
     INST --> DB
     JOBS[future justified jobs] -. Celery .-> REDIS[(Redis)]
-    DOMAIN[future AIM-01 through AIM-06 and other operational modules] -. must depend on shared identity and institution contracts .-> INST
+    DOMAIN[future intelligence, attendance, intervention and finance] -. must depend on shared identity and institution contracts .-> INST
 ```
 
 Future operational domains must remain separate packages with explicit service/API boundaries. They must not import one another's private models. Shared invariants (authorization, audit, configuration versioning and transaction ownership) belong in the platform layer or narrowly defined domain services.
@@ -54,10 +58,14 @@ Future operational domains must remain separate packages with explicit service/A
 
 ## Data and environment
 
-PostgreSQL is the target persistence engine. Local `config.settings.test` uses an isolated in-memory SQLite database. GitHub Actions is configured to run the backend suite against a disposable PostgreSQL 16 service using `config.settings.ci_postgres`; this does not use production infrastructure or records. Prompt 03 adds an initial migration for the `institutional` app. Identity MFA/recovery test tables retain the CI-only creation arrangement. The migration has not been executed against any shared or production database.
+PostgreSQL is the target persistence engine. Local `config.settings.test` uses an isolated in-memory SQLite database. GitHub Actions is configured to run the backend suite against a disposable PostgreSQL 16 service using `config.settings.ci_postgres`; this does not use production infrastructure or records. Prompts 03/04 add initial migrations for the `institutional` and `academic` apps. Identity MFA/recovery test tables retain the CI-only creation arrangement. Neither migration has been executed against any shared or production database.
 
-No school values, calendars, classes, subject choices, financial rates or role grants are seeded. The schema, tenant boundary and future module interfaces are described in [data architecture](data-architecture.md). Railway files remain templates and no production environment has been populated.
+No school values, calendars, classes, subject choices, Basic 9/mock mappings, financial rates or role grants are seeded. The schema, tenant boundary and future module interfaces are described in [data architecture](data-architecture.md). Railway files remain templates and no production environment has been populated.
 
 ## Quality and operational posture
 
 GitHub Actions validates frontend build/type/lint/tests, backend system checks/tests/types/lint, dependency advisories and repository configuration. A passing CI run is engineering evidence only. Owner acceptance, schema/security review, access-policy approval, backup/restore evidence, observability, incident response, UAT and any deployment decision remain separate gates.
+
+## Phase 04 runtime contract
+
+Academic routes under `/api/v1/institutions/{id}/academic/` check session/CSRF, exact institution/action RBAC, approved structure, effective placement/teaching periods, version and workflow state. Candidate/guardian/register/CSV import, BA-0 and weekly/mock activity histories have distinct grants. The PWA uses `context.permissions` as selected-tenant visibility hints only; authorization is always repeated server-side. Mock operations additionally require Owner-approved JHS Contact Person/Headmaster role and Basic 9 level mappings; empty mappings fail closed. Approved BA-0/weekly/mock evidence cannot be edited; an independent correction authorizer permits a new draft revision. No automatic grade/official prediction or payment follows. See [Phase 04 report](../prompt-04-candidate-academic-operations.md).

@@ -42,7 +42,7 @@ python -m pip install --upgrade pip
 python -m pip install -r backend/requirements/dev.txt
 ```
 
-Prompt 03 adds an initial migration for the `institutional` app; the identity security app remains in the existing unmigrated test/local schema arrangement. If you want a complete local API login/session run, use the following only against a disposable local database after confirming `DATABASE_URL` points there:
+Prompts 03/04 add initial migrations for the `institutional` and `academic` apps; the identity security app remains in the existing unmigrated test/local schema arrangement. If you want a complete local API login/session run, use the following only against a disposable local database after confirming `DATABASE_URL` points there:
 
 ```sh
 PYTHONPATH=backend DJANGO_SETTINGS_MODULE=config.settings.development \
@@ -53,7 +53,7 @@ PYTHONPATH=backend DJANGO_SETTINGS_MODULE=config.settings.development \
   python backend/manage.py runserver 0.0.0.0:8000
 ```
 
-`migrate --run-syncdb` here applies the institutional migration and creates any configured unmigrated app tables in the disposable local database. This is a local developer/test convenience, not a reviewed shared/production migration path. Do not run it against shared, staging or production infrastructure. Production use requires a separately reviewed migration plan, backup/rollback treatment and Owner authorization.
+`migrate --run-syncdb` here applies the institutional and academic migrations and creates any configured unmigrated app tables in the disposable local database. This is a local developer/test convenience, not a reviewed shared/production migration path. Do not run it against shared, staging or production infrastructure. Production use requires a separately reviewed migration plan, backup/rollback treatment and Owner authorization.
 
 Liveness is available at `http://127.0.0.1:8000/api/v1/health/live/`; readiness at `/api/v1/health/ready/` checks PostgreSQL only. No Redis worker, role seed, learner record or business endpoint is created.
 
@@ -85,12 +85,12 @@ From the repository root with `.venv` active:
 ```sh
 PYTHONPATH=backend DJANGO_SETTINGS_MODULE=config.settings.test python backend/manage.py check
 PYTHONPATH=backend DJANGO_SETTINGS_MODULE=config.settings.test pytest backend
-cd backend && ruff check . && ruff format --check . && mypy config core identity institutional
+cd backend && ruff check . && ruff format --check . && mypy config core identity institutional academic
 cd .. && python scripts/validate_config.py
 pip-audit -r backend/requirements/dev.txt
 ```
 
-Local backend test settings use an isolated in-memory SQLite database. The GitHub Actions backend job separately opts into `config.settings.ci_postgres` and a disposable PostgreSQL 16 service with trust authentication confined to that ephemeral CI container. This exercises PostgreSQL query/model behavior and the committed institutional migration without production infrastructure or records; it does not validate production performance/configuration, Redis connectivity, or backup/restore behavior.
+Local backend test settings use an isolated in-memory SQLite database. The GitHub Actions backend job separately opts into `config.settings.ci_postgres` and a disposable PostgreSQL 16 service with trust authentication confined to that ephemeral CI container. This exercises PostgreSQL query/model behavior and the committed institutional and academic migrations without production infrastructure or records; it does not validate production performance/configuration, Redis connectivity, or backup/restore behavior.
 
 ## 5. Code conventions
 

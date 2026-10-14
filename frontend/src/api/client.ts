@@ -122,7 +122,7 @@ function errorMessage(payload: ErrorPayload | null): string {
   return 'The request could not be completed. Please try again.'
 }
 
-async function requestJson<T>(
+export async function requestJson<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {

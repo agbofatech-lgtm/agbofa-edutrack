@@ -1,3 +1,5 @@
+> **Historical Phase 01–03 document.** The full v1.5 Sections 1–37 and 64-prompt roadmap were not available in the Phase 04 session; the assertions below document earlier work, not fresh access to those source requirements. Phase 03 was subsequently accepted at `3e3058096b9a846c3134522e346ebf4e8eb8ffea`. For implemented Phase 04 scope and unresolved governance see [Phase 04 engineering report](prompt-04-candidate-academic-operations.md). No Phase 04 acceptance or production authorization is implied.
+
 # Prompt 01–03 requirements traceability
 
 **Baseline:** AGBOFA EduTrack Master Requirements v1.5, draft for Owner review, dated 13 October 2026. The pasted document retains v1.4/v1.3 headings in carry-forward sections; implementations preserve its stated precedence and unresolved Owner gates.

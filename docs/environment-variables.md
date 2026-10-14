@@ -41,3 +41,9 @@ The tracked `.env.example` is a blank local template. Django reads the repositor
 - Privileged TOTP setup uses `MFA_ENCRYPTION_KEY`; the API does not fall back to signing/encrypting with the Django session secret. The key is not populated in `.env.example`.
 - The rate-limit defaults are implementation-level starting points, not approved school/security policy. Production rate-limit behavior depends on a trusted proxy/client-IP configuration and a shared cache; validate the actual deployment topology before exposure.
 - These settings do not authorize schema migrations, account provisioning, a recovery channel, or production deployment.
+
+## Phase 04 fail-closed academic mappings
+
+`ACADEMIC_MOCK_PREPARER_ROLE_CODE`, `ACADEMIC_MOCK_APPROVER_ROLE_CODE`, and `ACADEMIC_BECE_LEVEL_CODE` are all **blank** in the tracked template and by default. They must be populated only with Owner-approved role codes for the JHS Contact Person / Headmaster and the institution's approved Basic 9 level code. Every mock action also requires its own explicit `academic.mock.*` exact-institution permission; approval/publication/authorization require a privileged account with MFA. A Local Manager role is not the operational mock approver. Do not guess codes, infer from class position/name, enable a financial entitlement, or use these variables to provision users. If mappings are absent, mock operations fail closed while lower-level candidate/BA-0/weekly foundations remain available to appropriately scoped users.
+
+See [Phase 04 report](prompt-04-candidate-academic-operations.md) for authorization, migration and privacy boundaries.

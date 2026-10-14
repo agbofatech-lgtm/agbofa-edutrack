@@ -18,7 +18,7 @@ afterEach(() => {
 })
 
 describe('application foundation shell', () => {
-  it('shows the authenticated shell without fabricated school metrics or module navigation', async () => {
+  it('shows the authenticated shell without fabricated school metrics or unauthorized module navigation', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
@@ -55,17 +55,17 @@ describe('application foundation shell', () => {
 
     expect(
       await screen.findByRole('heading', {
-        name: /ready for the next approved stage/i,
+        name: /ready for approved operations/i,
       }),
     ).toBeInTheDocument()
 
     expect(
-      screen.getByText('No operational records in this milestone'),
+      screen.getByText('No invented school records or metrics'),
     ).toBeInTheDocument()
 
     expect(
       screen.getByText(
-        /No simulated figures or sample learner records are shown/i,
+        /Candidate, baseline, weekly and mock source operations are/i,
       ),
     ).toBeInTheDocument()
 
@@ -76,7 +76,7 @@ describe('application foundation shell', () => {
     ).toBeInTheDocument()
 
     expect(
-      screen.queryByText(/BECE analytics|collections|candidate register/i),
+      screen.queryByRole('link', { name: 'Academic operations' }),
     ).not.toBeInTheDocument()
 
     await waitFor(() => {
